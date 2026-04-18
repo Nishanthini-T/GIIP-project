@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GIIP – Dashboards</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #1a1a3e;
+      --navy-dark: #12122e;
+      --purple:    #6c47ff;
+      --purple2:   #8b5cf6;
+      --teal:      #22d3b8;
+      --cyan:      #06b6d4;
+      --orange:    #f97316;
+      --pink:      #ec4899;
+      --white:     #ffffff;
+      --card-bg:   #ffffff;
+      --body-bg:   #f5f6fa;
+      --text-dark: #1e1e3f;
+      --text-mid:  #4a4a6a;
+      --text-muted:#8888aa;
+      --border:    rgba(0,0,0,0.08);
+      --font:      'Inter', sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--body-bg);
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* ── NAVBAR (matches home: dark navy bg) ── */
+    .navbar {
+      background: var(--navy-dark);
+      padding: 0 2.5rem;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .nav-brand-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--purple), var(--cyan));
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 18px;
+    }
+
+    .nav-brand-text {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 0.04em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 400;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: all 0.18s;
+    }
+
+    .nav-links a:hover {
+      color: var(--white);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .nav-links a.active {
+      color: var(--white);
+      background: rgba(108,71,255,0.35);
+      font-weight: 600;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-avatar {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--purple), var(--teal));
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 14px;
+      color: #fff;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .nav-logout {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(108,71,255,0.2);
+      border: 1px solid rgba(108,71,255,0.5);
+      color: var(--white);
+      padding: 0.45rem 1.1rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .nav-logout:hover {
+      background: rgba(108,71,255,0.4);
+    }
+
+    /* ── HERO (matches home: purple→navy gradient) ── */
+    .hero {
+      background: linear-gradient(135deg, #2d1b69 0%, #1a1a5e 40%, #0f3460 70%, #0a2a4a 100%);
+      padding: 3.5rem 2.5rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -100px; right: -80px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(108,71,255,0.25) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; left: 20%;
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(34,211,184,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero-breadcrumb {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 1.3rem;
+    }
+    .hero-breadcrumb .sep { opacity: 0.4; }
+    .hero-breadcrumb .cur { color: rgba(255,255,255,0.9); }
+
+    .hero-title {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 0.85rem;
+    }
+
+    .hero-subtitle {
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.65);
+      font-weight: 400;
+      max-width: 540px;
+      line-height: 1.65;
+      margin-bottom: 2rem;
+    }
+
+    .hero-pills {
+      display: flex; align-items: center;
+      gap: 0.75rem; flex-wrap: wrap;
+    }
+
+    .hero-pill {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 100px;
+      padding: 0.35rem 1rem;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.85);
+      font-weight: 500;
+    }
+
+    .pill-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+    }
+    .dot-live  { background: #4ade80; box-shadow: 0 0 7px #4ade80; }
+    .dot-blue  { background: var(--cyan); }
+    .dot-purple { background: var(--purple2); }
+    .dot-white { background: rgba(255,255,255,0.7); }
+
+    /* ── TABS BAR (white bar, matching home style) ── */
+    .tabs-bar {
+      background: var(--white);
+      border-bottom: 2px solid rgba(0,0,0,0.06);
+      padding: 0 2.5rem;
+      display: flex;
+      align-items: flex-end;
+      position: sticky;
+      top: 68px;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .tab-btn {
+      display: flex; align-items: center; gap: 9px;
+      padding: 1.1rem 1.5rem;
+      background: none; border: none;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover { color: var(--text-dark); }
+
+    .tab-btn.active {
+      color: var(--purple);
+      border-bottom-color: var(--purple);
+    }
+
+    .tab-icon-wrap {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .tab-btn.active .tab-icon-wrap { background: rgba(108,71,255,0.1); }
+    .tab-btn:not(.active) .tab-icon-wrap { background: #f0f1f5; }
+
+    .tab-live-badge {
+      font-size: 0.62rem;
+      background: #dcfce7;
+      color: #15803d;
+      border-radius: 100px;
+      padding: 2px 8px;
+      font-weight: 600;
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main { padding: 2.2rem 2.5rem 4rem; }
+
+    /* SECTION HEADER */
+    .section-header {
+      display: flex; align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 3px;
+    }
+
+    .section-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .action-btns { display: flex; gap: 8px; }
+
+    .btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0.5rem 1.1rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-family: var(--font);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .btn-ghost {
+      background: var(--white);
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+    }
+    .btn-ghost:hover { border-color: rgba(0,0,0,0.18); color: var(--text-dark); }
+
+    .btn-purple {
+      background: var(--purple);
+      border: none;
+      color: #fff;
+    }
+    .btn-purple:hover { background: #5535e8; }
+
+    /* ── STAT CARDS (matches home: white card, colored left border) ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 1.4rem 1.5rem 1.4rem 1.8rem;
+      border: 1px solid var(--border);
+      border-left: 4px solid;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card:hover {
+      box-shadow: 0 6px 24px rgba(0,0,0,0.09);
+      transform: translateY(-3px);
+    }
+
+    .stat-card.cyan   { border-left-color: var(--cyan); }
+    .stat-card.purple { border-left-color: var(--purple); }
+    .stat-card.orange { border-left-color: var(--orange); }
+    .stat-card.pink   { border-left-color: #8b5cf6; }
+
+    .stat-card-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: grid; place-items: center;
+      font-size: 20px;
+      margin-bottom: 1rem;
+    }
+
+    .stat-card.cyan   .stat-card-icon { background: rgba(34,211,184,0.12); }
+    .stat-card.purple .stat-card-icon { background: rgba(108,71,255,0.1); }
+    .stat-card.orange .stat-card-icon { background: rgba(249,115,22,0.1); }
+    .stat-card.pink   .stat-card-icon { background: rgba(139,92,246,0.1); }
+
+    .stat-card-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-card-label {
+      font-size: 0.82rem;
+      color: var(--text-mid);
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+
+    .stat-card-delta {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.75rem;
+      color: #16a34a;
+      font-weight: 500;
+    }
+
+    /* ── EMBED CARD ── */
+    .embed-card {
+      background: var(--white);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .embed-header {
+      background: linear-gradient(90deg, #f8f9ff 0%, #f0f2ff 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap; gap: 0.75rem;
+    }
+
+    .embed-header-left {
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .pbi-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: #fff;
+      border: 1.5px solid #fbbf24;
+      border-radius: 8px;
+      padding: 5px 11px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #92400e;
+    }
+
+    .embed-report-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .embed-header-right {
+      display: flex; gap: 8px;
+    }
+
+    .embed-btn {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+      padding: 5px 12px;
+      border-radius: 7px;
+      font-size: 0.75rem;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all 0.18s;
+      font-weight: 500;
+    }
+    .embed-btn:hover { color: var(--text-dark); border-color: rgba(0,0,0,0.18); }
+
+
+
+    /* iframe area */
+    .frame-shell {
+      position: relative;
+      background: #f8f9ff;
+    }
+
+    .frame-loader {
+      position: absolute; inset: 0;
+      background: #f8f9ff;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1rem; z-index: 5;
+      transition: opacity 0.4s;
+    }
+    .frame-loader.gone { opacity: 0; pointer-events: none; }
+
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(108,71,255,0.15);
+      border-top-color: var(--purple);
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .spinner-label {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+    }
+
+    iframe.bi-frame {
+      width: 100%;
+      height: 640px;
+      border: none;
+      display: block;
+    }
+
+    /* ── INSIGHT CARDS (matches home card style) ── */
+    .insights-section { margin-top: 2rem; }
+
+    .insights-heading {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1.1rem;
+    }
+
+    .insight-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.3rem 1.4rem;
+      border-top: 3px solid;
+      transition: box-shadow 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+    .insight-card:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    .insight-card.purple { border-top-color: var(--purple); }
+    .insight-card.cyan   { border-top-color: var(--teal); }
+    .insight-card.orange { border-top-color: var(--orange); }
+
+    .insight-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 3px 10px;
+      border-radius: 100px;
+      margin-bottom: 0.65rem;
+    }
+    .insight-tag.purple { background: rgba(108,71,255,0.1); color: var(--purple); }
+    .insight-tag.cyan   { background: rgba(34,211,184,0.1); color: #0d9488; }
+    .insight-tag.orange { background: rgba(249,115,22,0.1); color: var(--orange); }
+
+    .insight-card h4 {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 7px;
+      line-height: 1.4;
+    }
+
+    .insight-card p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* hide panels */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeUp 0.3s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy-dark);
+      padding: 1.5rem 2.5rem;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+
+    .footer-brand {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+    }
+    .footer-brand strong { color: rgba(255,255,255,0.85); }
+
+    .footer-links {
+      display: flex; gap: 1.5rem;
+    }
+    .footer-links a {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.45);
+      text-decoration: none;
+      transition: color 0.18s;
+    }
+    .footer-links a:hover { color: rgba(255,255,255,0.8); }
+
+    /* scroll bar */
+    .scroll-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--purple), var(--teal));
+      z-index: 9999;
+      transition: width 0.1s;
+    }
+  </style>
+</head>
+<body>
+
+<div class="scroll-bar" id="scrollBar"></div>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+  <a href="dashboard.html" class="nav-brand">
+    <div class="nav-brand-icon">🌐</div>
+    <span class="nav-brand-text">GIIP</span>
+  </a>
+
+  <ul class="nav-links">
+    <li><a href="dashboard.html">Home</a></li>
+    <li><a href="explore-map.html">Explore Map</a></li>
+    <li><a href="country-analysis.html">Country Analysis</a></li>
+    <li><a href="dashboard1.html" class="active">Dashboards</a></li>
+    <li><a href="reports.html">Reports</a></li>
+    <li><a href="feedback.html">Feedback</a></li>
+  </ul>
+
+  <div class="nav-right">
+    <a href="profile.html" class="nav-avatar" id="userAvatar" title="View Profile">U</a>
+    <button class="nav-logout" onclick="handleLogout()">↪ Logout</button>
+</div>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-breadcrumb">
+    <span>Home</span>
+    <span class="sep">/</span>
+    <span class="cur">Dashboards</span>
+  </div>
+
+  <h1 class="hero-title">Interactive Dashboards</h1>
+  <p class="hero-subtitle">Explore embedded Power BI reports covering global income inequality, key drivers, and geospatial explorer across 195+ countries from 2010–2025.</p>
+
+  <div class="hero-pills">
+    <div class="hero-pill"><div class="pill-dot dot-live"></div> Live · Updated daily</div>
+    <div class="hero-pill"><div class="pill-dot dot-blue"></div> 50M+ data points</div>
+    <div class="hero-pill"><div class="pill-dot dot-purple"></div> Power BI Embedded</div>
+    <div class="hero-pill"><div class="pill-dot dot-white"></div> 2010 – 2025</div>
+  </div>
+</div>
+
+<!-- ── TABS ── -->
+<div class="tabs-bar">
+  <button class="tab-btn active" data-tab="0">
+    <div class="tab-icon-wrap">📊</div>
+    Overview
+    <span class="tab-live-badge">Live</span>
+  </button>
+  <button class="tab-btn" data-tab="1">
+    <div class="tab-icon-wrap">📈</div>
+    Drivers
+  </button>
+  <button class="tab-btn" data-tab="2">
+    <div class="tab-icon-wrap">🗺️</div>
+    Explorer
+  </button>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- ══ OVERVIEW ══ -->
+  <div class="panel active" id="panel-0">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Global Inequality Overview</div>
+        <div class="section-desc">High-level view of Gini coefficients and income share across regions · 2010–2025</div>
+      </div>
+      <div class="action-btns">
+        <button class="btn btn-ghost">⬇ Export</button>
+        <button class="btn btn-ghost">🔗 Share</button>
+        <button class="btn btn-purple" onclick="openFullscreen()">⛶ Fullscreen</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card cyan">
+        <div class="stat-card-icon">📐</div>
+        <div class="stat-card-value">38.4</div>
+        <div class="stat-card-label">Avg. Gini Index</div>
+        <div class="stat-card-delta">↑ +0.6 vs 2024</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-card-icon">🌍</div>
+        <div class="stat-card-value">195+</div>
+        <div class="stat-card-label">Countries Covered</div>
+        <div class="stat-card-delta">↑ 5 new this month</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-card-icon">💰</div>
+        <div class="stat-card-value">52.1%</div>
+        <div class="stat-card-label">Top 10% Income Share</div>
+        <div class="stat-card-delta">↓ −0.4% improvement</div>
+      </div>
+      <div class="stat-card pink">
+        <div class="stat-card-icon">✅</div>
+        <div class="stat-card-value">98.5%</div>
+        <div class="stat-card-label">Accuracy Rate</div>
+        <div class="stat-card-delta">↑ +0.3% vs last month</div>
+      </div>
+    </div>
+
+    <div class="embed-card">
+      <div class="embed-header">
+        <div class="embed-header-left">
+          <div class="pbi-badge">⚡ Power BI</div>
+          <span class="embed-report-name">Global Inequality Overview Report</span>
+        </div>
+        <div class="embed-header-right">
+          <button class="embed-btn" onclick="reloadFrame()">↺ Refresh</button>
+          <button class="embed-btn" onclick="openFullscreen()">⛶ Fullscreen</button>
+        </div>
+      </div>
+      <div class="frame-shell">
+        <div class="frame-loader" id="frameLoader">
+          <div class="spinner"></div>
+          <div class="spinner-label">Loading Power BI report…</div>
+        </div>
+        <iframe
+          id="reportFrame"
+          class="bi-frame"
+          src="https://app.powerbi.com/view?r=eyJrIjoiMTMyNDk0ZjItODQwNS00N2E1LTg0NTQtYTg0YWU5MjVkZTQ3IiwidCI6IjgwOGNjODNlLWE1NDYtNDdlNy1hMDNmLTczYTFlYmJhMjRmMyIsImMiOjEwfQ%3D%3D"
+          allowfullscreen
+          title="GIIP Power BI Dashboard"
+        ></iframe>
+      </div>
+    </div>
+
+    <div class="insights-section">
+      <div class="insights-heading">Related Insights</div>
+      <div class="insights-grid">
+        <div class="insight-card purple">
+          <div class="insight-tag purple">Inequality</div>
+          <h4>Sub-Saharan Africa leads in inequality growth</h4>
+          <p>Gini index rose 2.3 points over the last 5 years, outpacing all other regions globally.</p>
+        </div>
+        <div class="insight-card cyan">
+          <div class="insight-tag cyan">Trend · Income</div>
+          <h4>Nordic nations maintain lowest disparity</h4>
+          <p>Average Gini of 27.4 across Norway, Denmark, and Finland recorded in 2024.</p>
+        </div>
+        <div class="insight-card orange">
+          <div class="insight-tag orange">Data Update</div>
+          <h4>Updated Q4 2024 data now available</h4>
+          <p>50M+ data points refreshed. 5 new countries added to the tracking database.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DRIVERS ══ -->
+  <div class="panel" id="panel-1">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Inequality Drivers Analysis</div>
+        <div class="section-desc">Correlations between education, GDP, policy, and key inequality measures</div>
+      </div>
+      <div class="action-btns">
+        <button class="btn btn-ghost">⬇ Export</button>
+        <button class="btn btn-ghost">🔗 Share</button>
+        <button class="btn btn-purple" onclick="openFullscreen()">⛶ Fullscreen</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card cyan">
+        <div class="stat-card-icon">🔍</div>
+        <div class="stat-card-value">14</div>
+        <div class="stat-card-label">Key Drivers Tracked</div>
+        <div class="stat-card-delta">↑ Education, GDP, Policy</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-card-icon">📉</div>
+        <div class="stat-card-value">0.87</div>
+        <div class="stat-card-label">Correlation Score</div>
+        <div class="stat-card-delta">↑ High predictive accuracy</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-card-icon">🏛️</div>
+        <div class="stat-card-value">63.2</div>
+        <div class="stat-card-label">Policy Impact Index</div>
+        <div class="stat-card-delta">↑ +4.1 pts this year</div>
+      </div>
+      <div class="stat-card pink">
+        <div class="stat-card-icon">🎯</div>
+        <div class="stat-card-value">0.91</div>
+        <div class="stat-card-label">Model R² Score</div>
+        <div class="stat-card-delta">↑ Improved model fit</div>
+      </div>
+    </div>
+
+    <div class="embed-card">
+      <div class="embed-header">
+        <div class="embed-header-left">
+          <div class="pbi-badge">⚡ Power BI</div>
+          <span class="embed-report-name">Inequality Drivers Report</span>
+        </div>
+        <div class="embed-header-right">
+          <button class="embed-btn" onclick="reloadFrame()">↺ Refresh</button>
+          <button class="embed-btn" onclick="openFullscreen()">⛶ Fullscreen</button>
+        </div>
+      </div>
+      <div class="frame-shell">
+        <div class="frame-loader" id="frameLoader1">
+          <div class="spinner"></div>
+          <div class="spinner-label">Loading Power BI report…</div>
+        </div>
+        <iframe
+          id="reportFrame1"
+          class="bi-frame"
+          src="https://app.powerbi.com/view?r=eyJrIjoiMTMyNDk0ZjItODQwNS00N2E1LTg0NTQtYTg0YWU5MjVkZTQ3IiwidCI6IjgwOGNjODNlLWE1NDYtNDdlNy1hMDNmLTczYTFlYmJhMjRmMyIsImMiOjEwfQ%3D%3D&pageName=ReportSection1"
+          allowfullscreen
+          title="GIIP Drivers Dashboard"
+        ></iframe>
+      </div>
+    </div>
+
+    <div class="insights-section">
+      <div class="insights-heading">Related Insights</div>
+      <div class="insights-grid">
+        <div class="insight-card purple">
+          <div class="insight-tag purple">Education</div>
+          <h4>Education access reduces inequality by 18%</h4>
+          <p>Countries with universal secondary education show significantly lower Gini scores.</p>
+        </div>
+        <div class="insight-card cyan">
+          <div class="insight-tag cyan">Policy</div>
+          <h4>Progressive tax policies show strongest effect</h4>
+          <p>Top-quartile tax progressivity correlates with a 12-pt lower Gini on average.</p>
+        </div>
+        <div class="insight-card orange">
+          <div class="insight-tag orange">GDP</div>
+          <h4>GDP growth alone doesn't reduce inequality</h4>
+          <p>Countries in high-growth phases often experience temporary spikes in disparity.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ EXPLORER ══ -->
+  <div class="panel" id="panel-2">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Geospatial Inequality Explorer</div>
+        <div class="section-desc">Interactive map and drill-down by country, region, or indicator · 2010–2025</div>
+      </div>
+      <div class="action-btns">
+        <button class="btn btn-ghost">⬇ Export</button>
+        <button class="btn btn-ghost">🔗 Share</button>
+        <button class="btn btn-purple" onclick="openFullscreen()">⛶ Fullscreen</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card cyan">
+        <div class="stat-card-icon">🗺️</div>
+        <div class="stat-card-value">195</div>
+        <div class="stat-card-label">Countries Mapped</div>
+        <div class="stat-card-delta">↑ Full global coverage</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-card-icon">📌</div>
+        <div class="stat-card-value">38</div>
+        <div class="stat-card-label">Indicators Available</div>
+        <div class="stat-card-delta">↑ +6 new indicators</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-card-icon">⚠️</div>
+        <div class="stat-card-value">SSA</div>
+        <div class="stat-card-label">Most Unequal Region</div>
+        <div class="stat-card-delta">Sub-Saharan Africa</div>
+      </div>
+      <div class="stat-card pink">
+        <div class="stat-card-icon">📅</div>
+        <div class="stat-card-value">15Y</div>
+        <div class="stat-card-label">Data Timeline</div>
+        <div class="stat-card-delta">2010 – 2025</div>
+      </div>
+    </div>
+
+    <div class="embed-card">
+      <div class="embed-header">
+        <div class="embed-header-left">
+          <div class="pbi-badge">⚡ Power BI</div>
+          <span class="embed-report-name">Geospatial Explorer Report</span>
+        </div>
+        <div class="embed-header-right">
+          <button class="embed-btn" onclick="reloadFrame()">↺ Refresh</button>
+          <button class="embed-btn" onclick="openFullscreen()">⛶ Fullscreen</button>
+        </div>
+      </div>
+      <div class="frame-shell">
+        <div class="frame-loader" id="frameLoader2">
+          <div class="spinner"></div>
+          <div class="spinner-label">Loading Power BI report…</div>
+        </div>
+        <iframe
+          id="reportFrame2"
+          class="bi-frame"
+          src="https://app.powerbi.com/view?r=eyJrIjoiMTMyNDk0ZjItODQwNS00N2E1LTg0NTQtYTg0YWU5MjVkZTQ3IiwidCI6IjgwOGNjODNlLWE1NDYtNDdlNy1hMDNmLTczYTFlYmJhMjRmMyIsImMiOjEwfQ%3D%3D&pageName=ReportSection2"
+          allowfullscreen
+          title="GIIP Explorer Dashboard"
+        ></iframe>
+      </div>
+    </div>
+
+    <div class="insights-section">
+      <div class="insights-heading">Related Insights</div>
+      <div class="insights-grid">
+        <div class="insight-card purple">
+          <div class="insight-tag purple">Asia</div>
+          <h4>Southeast Asia shows fastest inequality reduction</h4>
+          <p>Vietnam, Thailand, and Indonesia reduced Gini by 3–5 pts in the last decade.</p>
+        </div>
+        <div class="insight-card cyan">
+          <div class="insight-tag cyan">Europe</div>
+          <h4>Eastern Europe closing gap with Western peers</h4>
+          <p>Poland and Czech Republic now rank among the top 20 most equal countries globally.</p>
+        </div>
+        <div class="insight-card orange">
+          <div class="insight-tag orange">Americas</div>
+          <h4>Latin America still highest inequality worldwide</h4>
+          <p>Average Gini of 45.8 persists despite sustained economic growth since 2015.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-brand">
+    <strong>GIIP</strong> · Global Inequality Intelligence Platform · Data coverage 2010–2025
+  </div>
+</footer>
+
+<script>
+  
+  window.addEventListener('DOMContentLoaded', () => {
+    const BASE_URL = "http://localhost:5000";
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    // Set avatar initials from stored name
+    const userName = localStorage.getItem('userName') || 'U';
+    const parts = userName.trim().split(' ');
+    const initials = parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : parts[0][0].toUpperCase();
+    document.querySelector('.nav-avatar').textContent = initials;
+  });
+
+  //Handle  Logout
+  function handleLogout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('isLoggedIn');
+  localStorage.removeItem('userName');
+  localStorage.removeItem('userEmail');
+  window.location.href = 'index.html';
+}
+  // Tab switching
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const panels  = document.querySelectorAll('.panel');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.tab;
+      tabBtns.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + idx).classList.add('active');
+    });
+  });
+
+  // Hide loaders on iframe load
+  ['frameLoader','frameLoader1','frameLoader2'].forEach((id, i) => {
+    const frame = document.getElementById('reportFrame' + (i === 0 ? '' : i));
+    if (frame) {
+      frame.addEventListener('load', () => {
+        document.getElementById(id)?.classList.add('gone');
+      });
+    }
+  });
+
+  function reloadFrame() {
+    const activePanel = document.querySelector('.panel.active');
+    const frame = activePanel?.querySelector('iframe');
+    const loader = activePanel?.querySelector('.frame-loader');
+    if (frame && loader) {
+      loader.classList.remove('gone');
+      frame.src = frame.src;
+    }
+  }
+
+  function openFullscreen() {
+    const activePanel = document.querySelector('.panel.active');
+    const frame = activePanel?.querySelector('iframe');
+    if (!frame) return;
+    if (frame.requestFullscreen) frame.requestFullscreen();
+    else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+  }
+
+  // Scroll progress
+  window.addEventListener('scroll', () => {
+    const el = document.getElementById('scrollBar');
+    const st = document.documentElement.scrollTop;
+    const sh = document.documentElement.scrollHeight - window.innerHeight;
+    el.style.width = (st / sh * 100) + '%';
+  });
+</script>
+<script src="//code.tidio.co/qbvoc0qo3w5njbogwleiyjh8agsvznz4.js" async></script>
+</body>
+</html>

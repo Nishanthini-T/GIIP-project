@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Map - GIIP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --navy-dark: #0f172a;
+            --navy: #1e293b;
+            --navy-light: #334155;
+            --purple: #7c3aed;
+            --purple-light: #8b5cf6;
+            --teal: #06b6d4;
+            --teal-light: #22d3ee;
+            --orange: #f97316;
+            --orange-light: #fb923c;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gradient-primary: linear-gradient(135deg, #1e293b 0%, #7c3aed 100%);
+            --gradient-hero: linear-gradient(135deg, #0f172a 0%, #4c1d95 50%, #7c3aed 100%);
+            --gradient-teal: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);
+            --gradient-orange: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-700);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--gradient-primary);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--white);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i {
+            color: var(--teal-light);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--gray-200);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--white);
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--teal);
+            border-radius: 2px;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--white);
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--gradient-teal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            text-decoration: none;
+            color: var(--white);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+            border-color: var(--white);
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 2px solid var(--teal-light);
+            color: var(--teal-light);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-logout:hover {
+            background: var(--teal);
+            color: var(--white);
+        }
+
+        /* Page Header */
+        .page-header {
+            background: var(--gradient-hero);
+            color: var(--white);
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+        }
+
+        .page-header p {
+            font-size: 1.125rem;
+            color: var(--gray-200);
+        }
+
+        /* Main Content */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Map Section */
+        .map-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow-xl);
+            margin-bottom: 2rem;
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .map-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--navy-dark);
+        }
+
+        .map-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .legend {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .map-wrapper {
+            position: relative;
+            background: var(--gray-50);
+            border-radius: 16px;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        #world-map {
+            width: 100%;
+            height: 600px;
+        }
+
+        .country {
+            fill: #94a3b8;
+            stroke: var(--white);
+            stroke-width: 0.5px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .country:hover {
+            fill: var(--teal);
+            filter: brightness(1.1);
+        }
+
+        /* Tooltip Card */
+        .tooltip-card {
+            position: absolute;
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-2xl);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+            min-width: 280px;
+            border-left: 4px solid var(--teal);
+        }
+
+        .tooltip-card.show {
+            opacity: 1;
+        }
+
+        .tooltip-card h3 {
+            font-size: 1.25rem;
+            color: var(--navy-dark);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .tooltip-region {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tooltip-metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .tooltip-metric:last-child {
+            border-bottom: none;
+        }
+
+        .tooltip-label {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .tooltip-value {
+            font-weight: 700;
+            color: var(--navy-dark);
+        }
+
+        .tooltip-value.high {
+            color: #ef4444;
+        }
+
+        .tooltip-value.medium {
+            color: var(--orange);
+        }
+
+        .tooltip-value.low {
+            color: #10b981;
+        }
+
+        .explore-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--gradient-teal);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        .explore-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--white);
+        }
+
+        .stat-icon.purple {
+            background: var(--gradient-primary);
+        }
+
+        .stat-icon.teal {
+            background: var(--gradient-teal);
+        }
+
+        .stat-icon.orange {
+            background: var(--gradient-orange);
+        }
+
+        .stat-info h4 {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-info p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--navy-dark);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--navy-dark);
+            color: var(--white);
+            padding: 2rem;
+            margin-top: 4rem;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .map-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .legend {
+                flex-wrap: wrap;
+            }
+
+            #world-map {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="dashboard.html" class="logo">
+                <i class="fas fa-globe-americas"></i>
+                GIIP
+            </a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">Home</a></li>
+                <li><a href="explore-map.html" class="active">Explore Map</a></li>
+                <li><a href="country-analysis.html">Country Analysis</a></li>
+                <li><a href="dashboard1.html">Dashboards</a></li>
+                <li><a href="reports.html">Reports</a></li>
+                <li><a href="feedback.html">Feedback</a></li>
+            </ul>
+            <div class="user-menu">
+                <a href="profile.html" class="user-avatar" id="userAvatar">U</a>
+                <button class="btn-logout" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <h1>Explore Global Inequality</h1>
+        <p>Interactive world map showing income inequality across countries</p>
+    </section>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Map Section -->
+        <div class="map-section">
+            <div class="map-header">
+                <h2 class="map-title">World Inequality Map</h2>
+                <div class="map-controls">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #10b981;"></div>
+                            <span>Low (&lt;35)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fbbf24;"></div>
+                            <span>Medium (35-45)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f97316;"></div>
+                            <span>High (45-55)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ef4444;"></div>
+                            <span>Very High (&gt;55)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-wrapper">
+                <div id="world-map"></div>
+                <div class="tooltip-card" id="tooltip">
+                    <h3 id="tooltipCountry">Country</h3>
+                    <div class="tooltip-region">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="tooltipRegion">Region</span>
+                    </div>
+                    <div class="tooltip-metric">
+                        <span class="tooltip-label">Gini Index:</span>
+                        <span class="tooltip-value" id="tooltipGini">0</span>
+                    </div>
+                    <div class="tooltip-metric">
+                        <span class="tooltip-label">Poverty Rate:</span>
+                        <span class="tooltip-value" id="tooltipPoverty">0%</span>
+                    </div>
+                    <div class="tooltip-metric">
+                        <span class="tooltip-label">Population:</span>
+                        <span class="tooltip-value" id="tooltipPopulation">0M</span>
+                    </div>
+                    <a href="#" class="explore-btn" id="exploreCountryBtn">
+                        <i class="fas fa-chart-line"></i>
+                        Explore Country
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>Countries Mapped</h4>
+                        <p>195</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon teal">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>Average Gini Index</h4>
+                        <p>39.5</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>High Inequality Countries</h4>
+                        <p>42</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 Global Inequality Intelligence Platform. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const BASE_URL = "http://localhost:5000";
+
+        // Check authentication
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load user avatar
+            const userName = localStorage.getItem('userName') || 'User';
+            const nameParts = userName.trim().split(' ');
+            let initials = 'U';
+            if (nameParts.length >= 2) {
+                initials = (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+            } else if (nameParts.length === 1 && nameParts[0].length > 0) {
+                initials = nameParts[0][0].toUpperCase();
+            }
+            document.getElementById('userAvatar').textContent = initials;
+
+            // Initialize map
+            initMap();
+        };
+
+        // Sample country data
+        const countryData = {
+            "South Africa": { gini: 63.0, poverty: 18.9, population: 59.3, region: "Sub-Saharan Africa" },
+            "Namibia": { gini: 59.1, poverty: 17.4, population: 2.5, region: "Sub-Saharan Africa" },
+            "Brazil": { gini: 53.4, poverty: 8.5, population: 212.6, region: "Latin America" },
+            "Colombia": { gini: 52.3, poverty: 12.2, population: 50.9, region: "Latin America" },
+            "India": { gini: 35.7, poverty: 21.2, population: 1380, region: "South Asia" },
+            "United States": { gini: 41.4, poverty: 11.4, population: 331, region: "North America" },
+            "China": { gini: 38.5, poverty: 0.6, population: 1439, region: "East Asia" },
+            "Germany": { gini: 31.9, poverty: 3.3, population: 83.2, region: "Europe" },
+            "United Kingdom": { gini: 35.1, poverty: 4.2, population: 67.2, region: "Europe" },
+            "France": { gini: 32.4, poverty: 4.0, population: 67.4, region: "Europe" },
+            "Japan": { gini: 32.9, poverty: 1.6, population: 126.5, region: "East Asia" },
+            "Australia": { gini: 34.4, poverty: 3.2, population: 25.5, region: "Oceania" },
+            "Canada": { gini: 33.3, poverty: 2.4, population: 37.7, region: "North America" },
+            "Mexico": { gini: 45.4, poverty: 7.8, population: 128.9, region: "Latin America" },
+            "Nigeria": { gini: 35.1, poverty: 40.1, population: 206, region: "Sub-Saharan Africa" },
+            "Egypt": { gini: 31.5, poverty: 4.8, population: 102.3, region: "Middle East" },
+            "Russia": { gini: 36.0, poverty: 1.2, population: 145.9, region: "Europe" },
+            "Indonesia": { gini: 37.9, poverty: 9.8, population: 273.5, region: "Southeast Asia" },
+            "Turkey": { gini: 41.9, poverty: 2.3, population: 84.3, region: "Middle East" },
+            "Saudi Arabia": { gini: 45.9, poverty: 1.3, population: 34.8, region: "Middle East" }
+        };
+
+        function getColor(gini) {
+            if (gini < 35) return '#10b981';
+            if (gini < 45) return '#fbbf24';
+            if (gini < 55) return '#f97316';
+            return '#ef4444';
+        }
+
+        function getValueClass(gini) {
+            if (gini < 35) return 'low';
+            if (gini < 45) return 'medium';
+            if (gini < 55) return 'high';
+            return 'very-high';
+        }
+
+        function initMap() {
+            const width = document.getElementById('world-map').offsetWidth;
+            const height = 600;
+
+            const svg = d3.select("#world-map")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .attr("viewBox", `0 0 ${width} ${height}`)
+                .attr("preserveAspectRatio", "xMidYMid meet");
+
+            const projection = d3.geoNaturalEarth1()
+                .scale(width / 5)
+                .translate([width / 2, height / 2]);
+
+            const path = d3.geoPath().projection(projection);
+
+            // Load world map data
+            d3.json("https://unpkg.com/world-atlas@2.0.2/countries-110m.json").then(function(world) {
+                const countries = topojson.feature(world, world.objects.countries).features;
+
+                svg.selectAll(".country")
+                    .data(countries)
+                    .enter()
+                    .append("path")
+                    .attr("class", "country")
+                    .attr("d", path)
+                    .attr("id", d => "country-" + d.id)
+                    .on("mouseover", function(event, d) {
+                        const countryName = d.properties.name;
+                        const data = countryData[countryName] || { 
+                            gini: (Math.random() * 30 + 25).toFixed(1), 
+                            poverty: (Math.random() * 20 + 2).toFixed(1), 
+                            population: (Math.random() * 100 + 5).toFixed(1),
+                            region: "Unknown"
+                        };
+
+                        // Update tooltip
+                        document.getElementById('tooltipCountry').textContent = countryName;
+                        document.getElementById('tooltipRegion').textContent = data.region;
+                        document.getElementById('tooltipGini').textContent = data.gini;
+                        document.getElementById('tooltipPoverty').textContent = data.poverty + '%';
+                        document.getElementById('tooltipPopulation').textContent = data.population + 'M';
+                        
+                        // Set color class
+                        const giniValue = document.getElementById('tooltipGini');
+                        giniValue.className = 'tooltip-value ' + getValueClass(data.gini);
+
+                        // Position tooltip
+                        const tooltip = document.getElementById('tooltip');
+                        tooltip.style.left = (event.pageX + 15) + 'px';
+                        tooltip.style.top = (event.pageY + 15) + 'px';
+                        tooltip.classList.add('show');
+
+                        // Update explore button
+                        document.getElementById('exploreCountryBtn').href = 
+                            `country-analysis.html?country=${encodeURIComponent(countryName)}`;
+
+                        // Highlight country
+                        d3.select(this).style("fill", getColor(data.gini));
+                    })
+                    .on("mouseout", function(event, d) {
+                        document.getElementById('tooltip').classList.remove('show');
+                        const countryName = d.properties.name;
+                        const data = countryData[countryName];
+                        d3.select(this).style("fill", data ? getColor(data.gini) : '#94a3b8');
+                    })
+                    .on("click", function(event, d) {
+                        const countryName = d.properties.name;
+                        window.location.href = `country-analysis.html?country=${encodeURIComponent(countryName)}`;
+                    });
+
+                // Color countries based on data
+                countries.forEach(country => {
+                    const name = country.properties.name;
+                    if (countryData[name]) {
+                        d3.select("#country-" + country.id)
+                            .style("fill", getColor(countryData[name].gini));
+                    }
+                });
+            }).catch(function(error) {
+                console.error("Error loading map:", error);
+            });
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userEmail');
+            window.location.href = 'index.html';
+        }
+    </script>
+     <!-- Tidio Chatbot -->
+    <script src="//code.tidio.co/qbvoc0qo3w5njbogwleiyjh8agsvznz4.js" async></script>
+</body>
+</html>

@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Country Analysis - GIIP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --navy-dark: #0f172a;
+            --navy: #1e293b;
+            --navy-light: #334155;
+            --purple: #7c3aed;
+            --purple-light: #8b5cf6;
+            --teal: #06b6d4;
+            --teal-light: #22d3ee;
+            --orange: #f97316;
+            --orange-light: #fb923c;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gradient-primary: linear-gradient(135deg, #1e293b 0%, #7c3aed 100%);
+            --gradient-hero: linear-gradient(135deg, #0f172a 0%, #4c1d95 50%, #7c3aed 100%);
+            --gradient-teal: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);
+            --gradient-orange: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-700);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--gradient-primary);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--white);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i {
+            color: var(--teal-light);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--gray-200);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--white);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--white);
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--gradient-teal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            text-decoration: none;
+            color: var(--white);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+            border-color: var(--white);
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 2px solid var(--teal-light);
+            color: var(--teal-light);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-logout:hover {
+            background: var(--teal);
+            color: var(--white);
+        }
+
+        /* Back Button */
+        .back-nav {
+            background: var(--gradient-hero);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        .page-title {
+            color: var(--white);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Country Header */
+        .country-header {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-xl);
+            margin-bottom: 2rem;
+            border-left: 6px solid var(--teal);
+        }
+
+        .country-info h1 {
+            font-size: 2.5rem;
+            color: var(--navy-dark);
+            margin-bottom: 0.5rem;
+            font-weight: 800;
+        }
+
+        .country-region {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--gray-600);
+            font-size: 1.125rem;
+        }
+
+        .country-region i {
+            color: var(--teal);
+        }
+
+        /* Overview Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s;
+            border-top: 4px solid var(--teal);
+        }
+
+        .metric-card:nth-child(2) {
+            border-top-color: var(--purple);
+        }
+
+        .metric-card:nth-child(3) {
+            border-top-color: var(--orange);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .metric-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .metric-card:nth-child(1) .metric-icon {
+            background: var(--gradient-teal);
+        }
+
+        .metric-card:nth-child(2) .metric-icon {
+            background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+        }
+
+        .metric-card:nth-child(3) .metric-icon {
+            background: var(--gradient-orange);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--navy-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-change {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .metric-change.positive {
+            color: #10b981;
+        }
+
+        .metric-change.negative {
+            color: #ef4444;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--navy-dark);
+        }
+
+        .chart-badge {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            padding: 0.375rem 0.875rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .chart-badge.purple {
+            background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+            color: var(--white);
+        }
+
+        .chart-badge.teal {
+            background: var(--gradient-teal);
+            color: var(--white);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* AI Insights */
+        .insights-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-xl);
+            margin-bottom: 2rem;
+            border-left: 6px solid var(--purple);
+        }
+
+        .insights-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .insights-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1.5rem;
+        }
+
+        .insights-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--navy-dark);
+        }
+
+        .insights-content {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .insight-item {
+            padding: 1.5rem;
+            background: var(--gray-50);
+            border-radius: 12px;
+            border-left: 4px solid var(--teal);
+        }
+
+        .insight-item h4 {
+            color: var(--navy-dark);
+            font-size: 1.125rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .insight-item h4 i {
+            color: var(--teal);
+        }
+
+        .insight-item p {
+            color: var(--gray-600);
+            line-height: 1.8;
+        }
+
+        /* Comparison Section */
+        .comparison-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-xl);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-header {
+            margin-bottom: 2rem;
+        }
+
+        .comparison-header h2 {
+            font-size: 1.75rem;
+            color: var(--navy-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .comparison-header p {
+            color: var(--gray-600);
+        }
+
+        .comparison-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .comparison-select {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+
+        .comparison-select:focus {
+            outline: none;
+            border-color: var(--purple);
+        }
+
+        .btn-compare {
+            padding: 1rem 2rem;
+            background: var(--gradient-teal);
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-compare:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--navy-dark);
+            color: var(--white);
+            padding: 2rem;
+            margin-top: 4rem;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .country-header {
+                text-align: center;
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="dashboard.html" class="logo">
+                <i class="fas fa-globe-americas"></i>
+                GIIP
+            </a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">Home</a></li>
+                <li><a href="explore-map.html">Explore Map</a></li>
+                <li><a href="country-analysis.html" class="active">Country Analysis</a></li>
+                <li><a href="dashboard1.html">Dashboards</a></li>
+                <li><a href="reports.html">Reports</a></li>
+                <li><a href="feedback.html">Feedback</a></li>
+            </ul>
+            <div class="user-menu">
+                <a href="profile.html" class="user-avatar" id="userAvatar">U</a>
+                <button class="btn-logout" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Back Navigation -->
+    <div class="back-nav">
+        <a href="explore-map.html" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            Back to Map
+        </a>
+        <span class="page-title">Country Lab</span>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Country Header -->
+        <div class="country-header">
+            <div class="country-info">
+                <h1 id="countryName">South Africa</h1>
+                <div class="country-region">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span id="countryRegion">Sub-Saharan Africa</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overview Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="metric-label">GDP per Capita</div>
+                <div class="metric-value">$6,994</div>
+                <div class="metric-change negative">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>2.3% from last year</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="metric-label">Population</div>
+                <div class="metric-value">59.3M</div>
+                <div class="metric-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>1.2% annual growth</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="metric-label">Median Income</div>
+                <div class="metric-value">$4,250</div>
+                <div class="metric-change negative">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>1.8% from last year</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <!-- Gini Index Trend -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Gini Index Trend (2010-2025)</h3>
+                    <span class="chart-badge purple">Historical</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="giniTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Poverty Rate Trend -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Poverty Rate Trend</h3>
+                    <span class="chart-badge teal">Historical</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="povertyTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Income Distribution -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Income Distribution</h3>
+                    <span class="chart-badge">2025</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="incomeDistributionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Future Prediction -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Future Prediction (2026-2030)</h3>
+                    <span class="chart-badge purple">AI Forecast</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="predictionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights -->
+        <div class="insights-section">
+            <div class="insights-header">
+                <div class="insights-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h2 class="insights-title">AI-Generated Insights</h2>
+            </div>
+            <div class="insights-content">
+                <div class="insight-item">
+                    <h4><i class="fas fa-exclamation-triangle"></i> High Inequality Alert</h4>
+                    <p>South Africa has one of the highest Gini coefficients globally at 63.0, indicating severe income inequality. The top 10% of the population controls approximately 65% of national wealth, while the bottom 50% owns less than 5%.</p>
+                </div>
+                <div class="insight-item">
+                    <h4><i class="fas fa-chart-line"></i> Trend Analysis</h4>
+                    <p>Despite government intervention programs, inequality has remained persistently high over the past decade. The poverty rate shows a slight decline from 21.2% in 2015 to 18.9% in 2025, but progress is slower than regional averages.</p>
+                </div>
+                <div class="insight-item">
+                    <h4><i class="fas fa-lightbulb"></i> Key Drivers</h4>
+                    <p>Major factors contributing to inequality include: historical legacy of apartheid, skills mismatch in the labor market, high unemployment rate (32.5%), and unequal access to quality education and healthcare services.</p>
+                </div>
+                <div class="insight-item">
+                    <h4><i class="fas fa-robot"></i> Predictive Outlook</h4>
+                    <p>Based on current trends and AI modeling, the Gini index is projected to decrease marginally to 61.5 by 2030 if targeted interventions in education, job creation, and social protection are implemented effectively.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Country Comparison -->
+        <div class="comparison-section">
+            <div class="comparison-header">
+                <h2>Compare Countries</h2>
+                <p>Select countries to compare inequality metrics side by side</p>
+            </div>
+            <div class="comparison-controls">
+                <select class="comparison-select" id="compareCountry1">
+                    <option value="">Select Country</option>
+                    <option value="South Africa">South Africa</option>
+                    <option value="Namibia">Namibia</option>
+                    <option value="Suriname">Suriname</option>
+                    <option value="Zambia">Zambia</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Colombia">Colombia</option>
+                    <option value="Botswana">Botswana</option>
+                    <option value="Honduras">Honduras</option>
+                    <option value="Guatemala">Guatemala</option>
+                    <option value="Panama">Panama</option>
+                    <option value="India">India</option>
+                    <option value="United States">United States</option>
+                    <option value="China">China</option>
+                    <option value="Germany">Germany</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="France">France</option>
+                    <option value="Japan">Japan</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Mexico">Mexico</option>
+                    <option value="Nigeria">Nigeria</option>
+                    <option value="Egypt">Egypt</option>
+                    <option value="Russia">Russia</option>
+                    <option value="Indonesia">Indonesia</option>
+                    <option value="Turkey">Turkey</option>
+                    <option value="Saudi Arabia">Saudi Arabia</option>
+                </select>
+                <select class="comparison-select" id="compareCountry2">
+                    <option value="">Select Country</option>
+                    <option value="South Africa">South Africa</option>
+                    <option value="Namibia">Namibia</option>
+                    <option value="Suriname">Suriname</option>
+                    <option value="Zambia">Zambia</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Colombia">Colombia</option>
+                    <option value="Botswana">Botswana</option>
+                    <option value="Honduras">Honduras</option>
+                    <option value="Guatemala">Guatemala</option>
+                    <option value="Panama">Panama</option>
+                    <option value="India">India</option>
+                    <option value="United States">United States</option>
+                    <option value="China">China</option>
+                    <option value="Germany">Germany</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="France">France</option>
+                    <option value="Japan">Japan</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Mexico">Mexico</option>
+                    <option value="Nigeria">Nigeria</option>
+                    <option value="Egypt">Egypt</option>
+                    <option value="Russia">Russia</option>
+                    <option value="Indonesia">Indonesia</option>
+                    <option value="Turkey">Turkey</option>
+                    <option value="Saudi Arabia">Saudi Arabia</option>
+                </select>
+                <button class="btn-compare" onclick="compareCountries()">
+                    <i class="fas fa-exchange-alt"></i>
+                    Compare
+                </button>
+            </div>
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 Global Inequality Intelligence Platform. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const BASE_URL = "http://localhost:5000";
+
+        // Check authentication
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load user avatar
+            const userName = localStorage.getItem('userName') || 'User';
+            const nameParts = userName.trim().split(' ');
+            let initials = 'U';
+            if (nameParts.length >= 2) {
+                initials = (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+            } else if (nameParts.length === 1 && nameParts[0].length > 0) {
+                initials = nameParts[0][0].toUpperCase();
+            }
+            document.getElementById('userAvatar').textContent = initials;
+
+            // Get country from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const country = urlParams.get('country') || 'South Africa';
+            
+            // Load country data
+            loadCountryData(country);
+            
+            // Initialize charts
+            initializeCharts();
+        };
+
+        // Country data
+        const countryData = {
+            "South Africa": {
+                region: "Sub-Saharan Africa",
+                gdpPerCapita: 6994,
+                population: 59.3,
+                medianIncome: 4250,
+                giniTrend: [67.4, 66.8, 66.0, 65.0, 64.3, 63.8, 63.4, 63.2, 63.0],
+                povertyTrend: [23.5, 22.8, 22.0, 21.2, 20.5, 19.8, 19.3, 19.0, 18.9],
+                incomeDistribution: [15, 20, 25, 22, 18],
+                prediction: [63.0, 62.7, 62.3, 62.0, 61.5]
+            },
+            "Brazil": {
+                region: "Latin America",
+                gdpPerCapita: 8897,
+                population: 212.6,
+                medianIncome: 6200,
+                giniTrend: [58.9, 57.8, 56.7, 55.5, 54.8, 54.2, 53.8, 53.6, 53.4],
+                povertyTrend: [12.5, 11.8, 10.9, 10.2, 9.5, 9.0, 8.7, 8.6, 8.5],
+                incomeDistribution: [12, 18, 28, 25, 17],
+                prediction: [53.4, 52.8, 52.2, 51.5, 51.0]
+            },
+            "Namibia": {
+                region: "Sub-Saharan Africa",
+                gdpPerCapita: 4960,
+                population: 2.5,
+                medianIncome: 3100,
+                giniTrend: [63.5, 62.8, 62.0, 61.2, 60.5, 59.9, 59.5, 59.3, 59.1],
+                povertyTrend: [22.1, 21.3, 20.4, 19.5, 18.8, 18.2, 17.8, 17.5, 17.4],
+                incomeDistribution: [14, 19, 26, 24, 17],
+                prediction: [59.1, 58.5, 57.8, 57.2, 56.5]
+            },
+            "India": {
+                region: "South Asia",
+                gdpPerCapita: 2100,
+                population: 1380,
+                medianIncome: 1800,
+                giniTrend: [38.9, 38.2, 37.5, 37.0, 36.5, 36.2, 35.9, 35.8, 35.7],
+                povertyTrend: [28.5, 26.8, 24.9, 23.2, 22.0, 21.5, 21.3, 21.2, 21.2],
+                incomeDistribution: [18, 24, 28, 20, 10],
+                prediction: [35.7, 35.3, 34.9, 34.5, 34.0]
+            },
+            "United States": {
+                region: "North America",
+                gdpPerCapita: 65297,
+                population: 331,
+                medianIncome: 52000,
+                giniTrend: [40.5, 40.8, 41.0, 41.2, 41.3, 41.4, 41.4, 41.4, 41.4],
+                povertyTrend: [13.2, 12.8, 12.3, 11.9, 11.6, 11.5, 11.4, 11.4, 11.4],
+                incomeDistribution: [10, 16, 24, 28, 22],
+                prediction: [41.4, 41.5, 41.5, 41.6, 41.6]
+            }
+        };
+
+        function loadCountryData(country) {
+            const data = countryData[country] || countryData["South Africa"];
+            
+            document.getElementById('countryName').textContent = country;
+            document.getElementById('countryRegion').textContent = data.region;
+            
+            // Update metrics
+            const metricCards = document.querySelectorAll('.metric-card');
+            metricCards[0].querySelector('.metric-value').textContent = '$' + data.gdpPerCapita.toLocaleString();
+            metricCards[1].querySelector('.metric-value').textContent = data.population + 'M';
+            metricCards[2].querySelector('.metric-value').textContent = '$' + data.medianIncome.toLocaleString();
+        }
+
+        function initializeCharts() {
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#475569';
+
+            const country = document.getElementById('countryName').textContent;
+            const data = countryData[country] || countryData["South Africa"];
+
+            // Gini Index Trend
+            new Chart(document.getElementById('giniTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: ['2010', '2012', '2014', '2016', '2018', '2020', '2022', '2024', '2025'],
+                    datasets: [{
+                        label: 'Gini Index',
+                        data: data.giniTrend,
+                        borderColor: '#7c3aed',
+                        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: false, min: 30 }
+                    }
+                }
+            });
+
+            // Poverty Rate Trend
+            new Chart(document.getElementById('povertyTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: ['2010', '2012', '2014', '2016', '2018', '2020', '2022', '2024', '2025'],
+                    datasets: [{
+                        label: 'Poverty Rate (%)',
+                        data: data.povertyTrend,
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Income Distribution
+            new Chart(document.getElementById('incomeDistributionChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Bottom 20%', '20-40%', '40-60%', '60-80%', 'Top 20%'],
+                    datasets: [{
+                        label: 'Income Share (%)',
+                        data: data.incomeDistribution,
+                        backgroundColor: [
+                            '#10b981',
+                            '#22d3ee',
+                            '#fbbf24',
+                            '#f97316',
+                            '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Future Prediction
+            new Chart(document.getElementById('predictionChart'), {
+                type: 'line',
+                data: {
+                    labels: ['2025', '2026', '2027', '2028', '2029', '2030'],
+                    datasets: [{
+                        label: 'Predicted Gini Index',
+                        data: data.prediction,
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderDash: [5, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: false, min: 30 }
+                    }
+                }
+            });
+
+            // Comparison Chart
+            const comparisonChart = new Chart(document.getElementById('comparisonChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Gini Index', 'Poverty Rate (%)', 'GDP per Capita ($K)'],
+                    datasets: [
+                        {
+                            label: 'South Africa',
+                            data: [63.0, 18.9, 6.99],
+                            backgroundColor: '#7c3aed'
+                        },
+                        {
+                            label: 'Namibia',
+                            data: [59.1, 17.4, 4.96],
+                            backgroundColor: '#06b6d4'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Store chart reference for updates
+            window.comparisonChart = comparisonChart;
+        }
+
+        function compareCountries() {
+            const country1 = document.getElementById('compareCountry1').value;
+            const country2 = document.getElementById('compareCountry2').value;
+            
+            if (!country1 || !country2) {
+                alert('Please select both countries to compare');
+                return;
+            }
+            
+            const data1 = countryData[country1] || countryData["South Africa"];
+            const data2 = countryData[country2] || countryData["Namibia"];
+
+            window.comparisonChart.data.datasets[0].label = country1;
+            window.comparisonChart.data.datasets[0].data = [
+                data1.giniTrend[data1.giniTrend.length - 1],
+                data1.povertyTrend[data1.povertyTrend.length - 1],
+                data1.gdpPerCapita / 1000
+            ];
+
+            window.comparisonChart.data.datasets[1].label = country2;
+            window.comparisonChart.data.datasets[1].data = [
+                data2.giniTrend[data2.giniTrend.length - 1],
+                data2.povertyTrend[data2.povertyTrend.length - 1],
+                data2.gdpPerCapita / 1000
+            ];
+
+            window.comparisonChart.update();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userEmail');
+            window.location.href = 'index.html';
+        }
+    </script>
+     <!-- Tidio Chatbot -->
+    <script src="//code.tidio.co/qbvoc0qo3w5njbogwleiyjh8agsvznz4.js" async></script>
+</body>
+</html>

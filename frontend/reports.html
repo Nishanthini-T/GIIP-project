@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GIIP – Data Explorer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <!-- Chart.js for all visualizations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <!-- Papa Parse for CSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── CSS VARIABLES (matches existing GIIP theme) ── */
+    :root {
+      --navy:      #12122e;
+      --purple:    #6c47ff;
+      --purple-lt: rgba(108,71,255,0.10);
+      --purple-md: rgba(108,71,255,0.20);
+      --teal:      #22d3b8;
+      --teal-lt:   rgba(34,211,184,0.10);
+      --cyan:      #06b6d4;
+      --orange:    #f97316;
+      --orange-lt: rgba(249,115,22,0.10);
+      --green:     #22c55e;
+      --green-lt:  rgba(34,197,94,0.10);
+      --red:       #ef4444;
+      --red-lt:    rgba(239,68,68,0.10);
+      --yellow:    #eab308;
+      --yellow-lt: rgba(234,179,8,0.10);
+      --body:      #f5f6fa;
+      --white:     #fff;
+      --border:    rgba(0,0,0,0.08);
+      --border2:   rgba(0,0,0,0.14);
+      --text:      #1e1e3f;
+      --mid:       #4a4a6a;
+      --muted:     #8888aa;
+      --font:      'Inter', sans-serif;
+      --chart-colors: #6c47ff, #22d3b8, #f97316, #22c55e, #ef4444, #06b6d4, #eab308, #a78bfa, #34d399, #fb923c;
+    }
+
+    body { font-family: var(--font); background: var(--body); color: var(--text); min-height: 100vh; }
+
+    /* ── SCROLL BAR ── */
+    .scroll-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--purple), var(--teal)); z-index: 9999; transition: width .1s; }
+
+    /* ── NAVBAR (unchanged from original) ── */
+    .navbar { background: var(--navy); padding: 0 2.5rem; height: 68px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; box-shadow: 0 2px 20px rgba(0,0,0,.35); }
+    .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-brand-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--purple), var(--cyan)); border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
+    .nav-brand-text { font-size: 1.3rem; font-weight: 700; color: #fff; letter-spacing: .04em; }
+    .nav-links { display: flex; align-items: center; gap: .2rem; list-style: none; }
+    .nav-links a { color: rgba(255,255,255,.7); text-decoration: none; font-size: .88rem; padding: .5rem 1rem; border-radius: 8px; transition: all .18s; }
+    .nav-links a:hover { color: #fff; background: rgba(255,255,255,.08); }
+    .nav-links a.active { color: #fff; background: rgba(108,71,255,.35); font-weight: 600; }
+    .nav-right { display: flex; align-items: center; gap: .9rem; }
+    .nav-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--purple), var(--teal)); border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: #fff; border: 2px solid rgba(255,255,255,.2); text-decoration: none; }
+    .nav-logout { display: flex; align-items: center; gap: 7px; background: rgba(108,71,255,.2); border: 1px solid rgba(108,71,255,.5); color: #fff; padding: .45rem 1.1rem; border-radius: 8px; font-size: .82rem; font-family: var(--font); cursor: pointer; transition: all .18s; }
+    .nav-logout:hover { background: rgba(108,71,255,.4); }
+
+    /* ── HERO ── */
+    .hero { background: linear-gradient(135deg, #2d1b69 0%, #1a1a5e 40%, #0f3460 70%, #0a2a4a 100%); padding: 3.5rem 2.5rem 3rem; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: -100px; right: -80px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(108,71,255,.25) 0%, transparent 65%); pointer-events: none; }
+    .hero::after { content: ''; position: absolute; bottom: -60px; left: 20%; width: 350px; height: 350px; background: radial-gradient(circle, rgba(34,211,184,.12) 0%, transparent 65%); pointer-events: none; }
+    .hero-bread { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: rgba(255,255,255,.55); margin-bottom: 1.3rem; }
+    .hero-bread .sep { opacity: .4; } .hero-bread .cur { color: rgba(255,255,255,.9); }
+    .hero-title { font-size: clamp(2rem,4vw,3rem); font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1.1; margin-bottom: .85rem; }
+    .hero-sub { font-size: .95rem; color: rgba(255,255,255,.65); max-width: 560px; line-height: 1.65; margin-bottom: 2rem; }
+    .hero-pills { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+    .pill { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); border-radius: 100px; padding: .35rem 1rem; font-size: .78rem; color: rgba(255,255,255,.85); font-weight: 500; }
+    .pdot { width: 7px; height: 7px; border-radius: 50%; }
+    .d-green { background: #4ade80; box-shadow: 0 0 7px #4ade80; }
+    .d-blue { background: var(--cyan); } .d-purple { background: #a78bfa; } .d-teal { background: var(--teal); }
+
+    /* ── MAIN LAYOUT ── */
+    .main { padding: 2rem 2.5rem 4rem; display: flex; flex-direction: column; gap: 2rem; }
+
+    /* ── UPLOAD SECTION ── */
+    .upload-section { background: var(--white); border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 24px rgba(0,0,0,.06); overflow: hidden; }
+    .upload-header { background: linear-gradient(135deg, #2d1b69, #1a1a5e); padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem; position: relative; overflow: hidden; }
+    .upload-header::after { content: ''; position: absolute; right: -40px; top: -40px; width: 150px; height: 150px; background: rgba(108,71,255,.3); border-radius: 50%; }
+    .upload-header-ico { width: 48px; height: 48px; border-radius: 14px; background: rgba(255,255,255,.15); display: grid; place-items: center; font-size: 22px; flex-shrink: 0; position: relative; z-index: 1; }
+    .upload-header-text h2 { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 3px; position: relative; z-index: 1; }
+    .upload-header-text p { font-size: .8rem; color: rgba(255,255,255,.65); position: relative; z-index: 1; }
+    .upload-body { padding: 2rem; }
+
+    /* ── DROP ZONE ── */
+    .drop-zone {
+      border: 2px dashed var(--border2);
+      border-radius: 16px;
+      padding: 3.5rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all .22s;
+      background: #fafbff;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--purple);
+      background: var(--purple-lt);
+      transform: translateY(-1px);
+    }
+    .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .drop-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+    .drop-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: .4rem; }
+    .drop-sub { font-size: .83rem; color: var(--muted); margin-bottom: 1rem; }
+    .drop-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--purple); color: #fff;
+      padding: .6rem 1.4rem; border-radius: 10px;
+      font-size: .85rem; font-weight: 600; border: none; cursor: pointer;
+      font-family: var(--font); transition: all .18s;
+    }
+    .drop-btn:hover { background: #5535e0; transform: translateY(-1px); }
+
+    /* ── FILE INFO BAR ── */
+    .file-info {
+      display: none;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.2rem 1.5rem;
+      background: var(--green-lt);
+      border: 1px solid rgba(34,197,94,.25);
+      border-radius: 12px;
+      margin-top: 1.2rem;
+      flex-wrap: wrap;
+    }
+    .file-info.show { display: flex; }
+    .file-info-icon { font-size: 1.8rem; }
+    .file-info-details { flex: 1; min-width: 0; }
+    .file-info-name { font-size: .95rem; font-weight: 700; color: #166534; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-info-meta { font-size: .78rem; color: #16a34a; margin-top: 2px; }
+    .file-info-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .col-tag {
+      font-size: .68rem; font-weight: 600; padding: 2px 8px; border-radius: 100px;
+      border: 1px solid;
+    }
+    .col-tag.numeric { background: var(--purple-lt); color: var(--purple); border-color: rgba(108,71,255,.3); }
+    .col-tag.categorical { background: var(--teal-lt); color: #0f766e; border-color: rgba(34,211,184,.4); }
+    .col-tag.time { background: var(--orange-lt); color: #c2410c; border-color: rgba(249,115,22,.3); }
+    .file-actions { display: flex; gap: 8px; }
+    .action-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: .55rem 1.1rem; border-radius: 9px;
+      font-size: .8rem; font-weight: 600; cursor: pointer;
+      font-family: var(--font); border: 1.5px solid; transition: all .18s;
+    }
+    .btn-export { background: var(--purple-lt); color: var(--purple); border-color: rgba(108,71,255,.3); }
+    .btn-export:hover { background: var(--purple); color: #fff; }
+    .btn-clear { background: var(--red-lt); color: var(--red); border-color: rgba(239,68,68,.3); }
+    .btn-clear:hover { background: var(--red); color: #fff; }
+
+    /* ── LOADING STATE ── */
+    .loading-state { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 2rem; gap: 1rem; }
+    .loading-state.show { display: flex; }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid var(--border2);
+      border-top-color: var(--purple);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: .95rem; font-weight: 600; color: var(--mid); }
+    .loading-sub { font-size: .8rem; color: var(--muted); }
+
+    /* ── CHARTS SECTION ── */
+    .charts-section { display: none; flex-direction: column; gap: 1.5rem; }
+    .charts-section.show { display: flex; }
+
+    /* ── SECTION HEADER ── */
+    .section-header { display: flex; align-items: center; justify-content: space-between; }
+    .section-title { font-size: 1.2rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 10px; }
+    .section-badge { font-size: .72rem; background: var(--purple-lt); color: var(--purple); border-radius: 100px; padding: 4px 12px; font-weight: 700; }
+
+    /* ── STATS ROW ── */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 14px; }
+    .stat-card { background: var(--white); border-radius: 14px; border: 1px solid var(--border); border-left: 4px solid; padding: 1.1rem 1.3rem; box-shadow: 0 2px 10px rgba(0,0,0,.04); transition: transform .2s, box-shadow .2s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,.08); }
+    .stat-card.p { border-left-color: var(--purple); }
+    .stat-card.t { border-left-color: var(--teal); }
+    .stat-card.o { border-left-color: var(--orange); }
+    .stat-card.g { border-left-color: var(--green); }
+    .stat-ico { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; font-size: 16px; margin-bottom: 10px; }
+    .stat-card.p .stat-ico { background: var(--purple-lt); }
+    .stat-card.t .stat-ico { background: var(--teal-lt); }
+    .stat-card.o .stat-ico { background: var(--orange-lt); }
+    .stat-card.g .stat-ico { background: var(--green-lt); }
+    .stat-val { font-size: 1.7rem; font-weight: 800; letter-spacing: -.04em; line-height: 1; margin-bottom: 3px; }
+    .stat-lbl { font-size: .73rem; color: var(--muted); }
+
+    /* ── CHARTS GRID ── */
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 1.5rem; }
+
+    /* ── CHART CARD ── */
+    .chart-card {
+      background: var(--white);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,.06);
+      overflow: hidden;
+      animation: slideIn .4s ease both;
+      display: flex;
+      flex-direction: column;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .chart-card-header { padding: 1.2rem 1.5rem .8rem; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+    .chart-type-badge { display: flex; align-items: center; gap: 6px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 100px; }
+    .badge-bar { background: var(--purple-lt); color: var(--purple); }
+    .badge-line { background: var(--teal-lt); color: #0f766e; }
+    .badge-doughnut { background: var(--orange-lt); color: #c2410c; }
+    .badge-scatter { background: var(--cyan); color: #fff; }
+    .badge-radar { background: var(--green-lt); color: #15803d; }
+    .badge-polar { background: var(--yellow-lt); color: #854d0e; }
+    .chart-title { font-size: .95rem; font-weight: 700; color: var(--text); margin-top: 4px; }
+    .chart-subtitle { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+    .chart-canvas-wrap { padding: 1.2rem 1.5rem 1.5rem; flex: 1; display: flex; align-items: center; justify-content: center; min-height: 280px; }
+    .chart-canvas-wrap canvas { max-height: 300px; }
+
+    /* ── EMPTY / PROMPT STATE ── */
+    .empty-state { text-align: center; padding: 4rem 2rem; background: var(--white); border-radius: 20px; border: 2px dashed var(--border2); }
+    .empty-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .empty-title { font-size: 1.2rem; font-weight: 700; color: var(--text); margin-bottom: .5rem; }
+    .empty-desc { font-size: .85rem; color: var(--muted); max-width: 380px; margin: 0 auto; line-height: 1.65; }
+
+    /* ── TOAST ── */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--navy); color: #fff; padding: .85rem 1.4rem; border-radius: 12px; font-size: .85rem; font-weight: 500; display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.25); transform: translateY(120%); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); z-index: 9999; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── FOOTER ── */
+    footer { background: var(--navy); padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .foot-brand { font-size: .8rem; color: rgba(255,255,255,.5); }
+    .foot-brand strong { color: rgba(255,255,255,.85); }
+    .foot-links { display: flex; gap: 1.5rem; }
+    .foot-links a { font-size: .78rem; color: rgba(255,255,255,.45); text-decoration: none; transition: color .18s; }
+    .foot-links a:hover { color: rgba(255,255,255,.8); }
+
+    @media (max-width: 700px) {
+      .charts-grid { grid-template-columns: 1fr; }
+      .main { padding: 1.5rem 1rem 3rem; }
+      .navbar { padding: 0 1rem; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="scroll-bar" id="scrollBar"></div>
+<div class="toast" id="toast"><span id="tico">✅</span><span id="tmsg">Done!</span></div>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+  <a href="dashboard.html" class="nav-brand">
+    <div class="nav-brand-icon">🌐</div>
+    <span class="nav-brand-text">GIIP</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="dashboard.html">Home</a></li>
+    <li><a href="explore-map.html">Explore Map</a></li>
+    <li><a href="country-analysis.html">Country Analysis</a></li>
+    <li><a href="dashboard1.html">Dashboards</a></li>
+    <li><a href="#" class="active">Data Explorer</a></li>
+    <li><a href="feedback.html">Feedback</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="profile.html" class="nav-avatar" id="userAvatar" title="View Profile">U</a>
+    <button class="nav-logout" onclick="handleLogout()">↪ Logout</button>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-bread"><span>Home</span><span class="sep">/</span><span class="cur">Data Explorer</span></div>
+  <h1 class="hero-title">Data Explorer</h1>
+  <p class="hero-sub">Upload any CSV file and instantly generate professional visualizations. Smart column detection automatically picks the best chart types for your data.</p>
+  <div class="hero-pills">
+    <div class="pill"><div class="pdot d-green"></div> Auto-detect Columns</div>
+    <div class="pill"><div class="pdot d-blue"></div> 6 Chart Types</div>
+    <div class="pill"><div class="pdot d-purple"></div> Export PDF</div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- ── UPLOAD CARD ── -->
+  <div class="upload-section">
+    <div class="upload-header">
+      <div class="upload-header-ico">📂</div>
+      <div class="upload-header-text">
+        <h2>Upload Your CSV</h2>
+        <p>Drag & drop or click to browse — Papa Parse handles the rest</p>
+      </div>
+    </div>
+    <div class="upload-body">
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="csvInput" accept=".csv" />
+        <span class="drop-icon">📊</span>
+        <div class="drop-title">Drop your CSV file here</div>
+        <div class="drop-sub">Supports any CSV with headers · Max recommended: 50,000 rows</div>
+        <button class="drop-btn" onclick="document.getElementById('csvInput').click(); event.preventDefault();">
+          📁 Browse File
+        </button>
+      </div>
+
+      <!-- File info bar (shown after upload) -->
+      <div class="file-info" id="fileInfo">
+        <span class="file-info-icon">✅</span>
+        <div class="file-info-details">
+          <div class="file-info-name" id="fileName">—</div>
+          <div class="file-info-meta" id="fileMeta">— rows · — columns</div>
+          <div class="file-info-tags" id="colTags"></div>
+        </div>
+        <div class="file-actions">
+          <button class="action-btn btn-export" onclick="exportPDF()">⬇ Export PDF</button>
+          <button class="action-btn btn-clear" onclick="clearData()">🗑 Clear Data</button>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <div class="loading-text">Parsing your CSV…</div>
+        <div class="loading-sub">Detecting column types and building charts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHARTS SECTION (hidden until CSV uploaded) ── -->
+  <div class="charts-section" id="chartsSection">
+
+    <!-- Stats row -->
+    <div class="section-header">
+      <div class="section-title">📈 Visualizations <span class="section-badge" id="chartCount">0 charts</span></div>
+    </div>
+    <div class="stats-row" id="statsRow"></div>
+
+    <!-- Chart grid -->
+    <div class="charts-grid" id="chartsGrid"></div>
+  </div>
+
+  <!-- ── EMPTY PROMPT (default) ── -->
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">🗂️</div>
+    <div class="empty-title">No data loaded yet</div>
+    <div class="empty-desc">Upload a CSV file above and the Data Explorer will automatically detect your columns and generate the most relevant charts for your data.</div>
+  </div>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="foot-brand"><strong>GIIP</strong> — Global Inequality Intelligence Platform</div>
+  <div class="foot-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </div>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DATA EXPLORER — Full Frontend CSV → Visualization Engine
+   No backend required. All logic runs in the browser.
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── STATE ─────────────────────────────────────────────────────
+let parsedData   = [];   // Array of row objects (after Papa Parse)
+let columnTypes  = {};   // { colName: 'numeric' | 'categorical' | 'time' }
+let activeCharts = [];   // Stores Chart.js instances so we can destroy them on clear
+
+// ── CHART COLOR PALETTE ───────────────────────────────────────
+const PALETTE = [
+  '#6c47ff','#22d3b8','#f97316','#22c55e',
+  '#ef4444','#06b6d4','#eab308','#a78bfa',
+  '#34d399','#fb923c','#818cf8','#2dd4bf'
+];
+
+// ── DRAG & DROP SETUP ─────────────────────────────────────────
+(function setupDragDrop() {
+  const zone = document.getElementById('dropZone');
+
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('drag-over');
+  });
+
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.csv')) {
+      handleFile(file);
+    } else {
+      showToast('⚠️', 'Please drop a valid .csv file');
+    }
+  });
+
+  document.getElementById('csvInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) handleFile(file);
+  });
+})();
+
+// ── HANDLE FILE SELECTION ─────────────────────────────────────
+function handleFile(file) {
+  showLoading(true);
+  document.getElementById('emptyState').style.display = 'none';
+
+  // Use Papa Parse for robust CSV reading
+  Papa.parse(file, {
+    header: true,          // First row = column names
+    dynamicTyping: true,   // Auto-convert numbers/booleans
+    skipEmptyLines: true,
+    complete: function(results) {
+      if (!results.data || results.data.length === 0) {
+        showToast('⚠️', 'CSV appears to be empty or malformed');
+        showLoading(false);
+        document.getElementById('emptyState').style.display = '';
+        return;
+      }
+      parsedData = results.data;
+      const cols = results.meta.fields || [];
+
+      // Detect column types
+      columnTypes = detectColumns(parsedData, cols);
+
+      // Show file info
+      renderFileInfo(file.name, parsedData.length, cols, columnTypes);
+
+      // Build all charts
+      generateCharts(parsedData, columnTypes);
+
+      showLoading(false);
+      showToast('✅', `Loaded ${parsedData.length.toLocaleString()} rows · ${cols.length} columns`);
+    },
+    error: function(err) {
+      showToast('❌', 'Parse error: ' + err.message);
+      showLoading(false);
+      document.getElementById('emptyState').style.display = '';
+    }
+  });
+}
+
+// ── SMART COLUMN DETECTION ────────────────────────────────────
+/**
+ * detectColumns — inspects a sample of rows and classifies each column as:
+ *   'numeric'     → mostly numeric values (integers or floats)
+ *   'time'        → looks like a year / date string
+ *   'categorical' → strings, country names, labels, etc.
+ *
+ * @param {Object[]} data — array of row objects
+ * @param {string[]} cols — column name array
+ * @returns {Object} — { colName: type }
+ */
+function detectColumns(data, cols) {
+  const types = {};
+  const SAMPLE = Math.min(data.length, 200); // Sample up to 200 rows for speed
+
+  // Regex patterns for time detection
+  const YEAR_RE    = /^\d{4}$/;
+  const DATE_RE    = /^\d{4}[-/]\d{2}[-/]\d{2}$/;
+  const TIME_WORDS = ['year','date','month','quarter','period','time','week','day'];
+
+  cols.forEach(col => {
+    if (!col) return;
+
+    let numericCount  = 0;
+    let timeCount     = 0;
+    let validCount    = 0;
+
+    for (let i = 0; i < SAMPLE; i++) {
+      const raw = data[i][col];
+      if (raw === null || raw === undefined || raw === '') continue;
+      validCount++;
+
+      const str = String(raw).trim();
+
+      // Check if it looks like a year or date
+      if (YEAR_RE.test(str) && +str >= 1900 && +str <= 2100) { timeCount++; continue; }
+      if (DATE_RE.test(str)) { timeCount++; continue; }
+
+      // Check if purely numeric
+      if (typeof raw === 'number' && !isNaN(raw)) { numericCount++; continue; }
+      if (!isNaN(parseFloat(str)) && isFinite(str)) { numericCount++; }
+    }
+
+    if (validCount === 0) { types[col] = 'categorical'; return; }
+
+    const numericRatio = numericCount / validCount;
+    const timeRatio    = timeCount    / validCount;
+
+    // Column name hints help override ratio when ambiguous
+    const colLower = col.toLowerCase();
+    const nameIsTime = TIME_WORDS.some(w => colLower.includes(w));
+
+    if (timeRatio > 0.7 || (nameIsTime && (timeRatio + numericRatio) > 0.7)) {
+      types[col] = 'time';
+    } else if (numericRatio > 0.75) {
+      types[col] = 'numeric';
+    } else {
+      types[col] = 'categorical';
+    }
+  });
+
+  return types;
+}
+
+// ── GENERATE ALL CHARTS ───────────────────────────────────────
+/**
+ * generateCharts — the master orchestrator.
+ * Decides which charts to generate based on what column types are available,
+ * then renders them into the charts grid.
+ */
+function generateCharts(data, colTypes) {
+  // Destroy any existing Chart.js instances
+  activeCharts.forEach(c => c.destroy());
+  activeCharts = [];
+
+  const numericCols     = Object.keys(colTypes).filter(c => colTypes[c] === 'numeric');
+  const categoricalCols = Object.keys(colTypes).filter(c => colTypes[c] === 'categorical');
+  const timeCols        = Object.keys(colTypes).filter(c => colTypes[c] === 'time');
+
+  const grid = document.getElementById('chartsGrid');
+  grid.innerHTML = '';
+
+  const chartsToRender = [];
+
+  // 1. BAR CHART — categorical vs numeric (most common, always show if possible)
+  if (categoricalCols.length > 0 && numericCols.length > 0) {
+    chartsToRender.push({
+      type: 'bar',
+      label: 'Bar Chart',
+      badgeClass: 'badge-bar',
+      catCol: categoricalCols[0],
+      numCol: numericCols[0],
+      title: `${numericCols[0]} by ${categoricalCols[0]}`,
+      subtitle: `Top 10 ${categoricalCols[0]} values · averaged`
+    });
+  }
+
+  // 2. LINE CHART — time vs numeric (show if time column exists)
+  if (timeCols.length > 0 && numericCols.length > 0) {
+    // Pick up to 3 numeric metrics to overlay
+    const metricsToLine = numericCols.slice(0, 3);
+    chartsToRender.push({
+      type: 'line',
+      label: 'Line Chart',
+      badgeClass: 'badge-line',
+      timeCol: timeCols[0],
+      numCols: metricsToLine,
+      title: `${metricsToLine.join(', ')} over ${timeCols[0]}`,
+      subtitle: `Trend analysis · averaged per ${timeCols[0]}`
+    });
+  }
+
+  // 3. DOUGHNUT — distribution of a numeric column (always useful)
+  if (numericCols.length > 0) {
+    // Choose the most "countable" numeric column (lowest unique count)
+    const doughnutCol = chooseDoughnutCol(data, numericCols);
+    chartsToRender.push({
+      type: 'doughnut',
+      label: 'Distribution',
+      badgeClass: 'badge-doughnut',
+      numCol: doughnutCol,
+      catCol: categoricalCols[0] || null,
+      title: `Distribution of ${doughnutCol}`,
+      subtitle: categoricalCols[0] ? `Grouped by ${categoricalCols[0]}` : 'Top 10 values'
+    });
+  }
+
+  // 4. SCATTER PLOT — numeric vs numeric (only if 2+ numeric cols)
+  if (numericCols.length >= 2) {
+    chartsToRender.push({
+      type: 'scatter',
+      label: 'Scatter Plot',
+      badgeClass: 'badge-scatter',
+      xCol: numericCols[0],
+      yCol: numericCols[1],
+      catCol: categoricalCols[0] || null,
+      title: `${numericCols[1]} vs ${numericCols[0]}`,
+      subtitle: 'Correlation explorer · up to 200 points shown'
+    });
+  }
+
+  // 5. RADAR — multi-metric comparison (only if 3+ numeric + categorical)
+  if (numericCols.length >= 3 && categoricalCols.length > 0) {
+    const radarMetrics = numericCols.slice(0, 6);
+    chartsToRender.push({
+      type: 'radar',
+      label: 'Radar Chart',
+      badgeClass: 'badge-radar',
+      catCol: categoricalCols[0],
+      numCols: radarMetrics,
+      title: `Multi-metric Radar by ${categoricalCols[0]}`,
+      subtitle: `Comparing ${radarMetrics.length} metrics · top 5 ${categoricalCols[0]}s`
+    });
+  }
+
+  // 6. POLAR AREA — top values of best numeric column
+  if (numericCols.length > 0) {
+    const polarCol = numericCols[numericCols.length > 1 ? 1 : 0]; // Use second numeric if available
+    chartsToRender.push({
+      type: 'polarArea',
+      label: 'Polar Area',
+      badgeClass: 'badge-polar',
+      numCol: polarCol,
+      catCol: categoricalCols[0] || null,
+      title: `${polarCol} — Polar View`,
+      subtitle: 'Top 8 values by magnitude'
+    });
+  }
+
+  // ── RENDER EACH CHART ─────────────────────────────────────
+  chartsToRender.forEach((cfg, idx) => {
+    const card = createChartCard(cfg, idx);
+    grid.appendChild(card);
+
+    // Get the canvas inside, then render
+    const canvas = card.querySelector('canvas');
+    const chart  = renderChart(canvas, cfg, data);
+    if (chart) activeCharts.push(chart);
+  });
+
+  // Summary stats
+  renderStats(data, numericCols, categoricalCols, timeCols);
+
+  // Update badge
+  document.getElementById('chartCount').textContent = `${chartsToRender.length} charts`;
+
+  // Show the section
+  document.getElementById('chartsSection').classList.add('show');
+}
+
+// ── HELPER: choose best doughnut column ──────────────────────
+function chooseDoughnutCol(data, numericCols) {
+  // Prefer a column with fewer unique values (more suitable for distribution)
+  let best = numericCols[0];
+  let bestUnique = Infinity;
+
+  numericCols.forEach(col => {
+    const unique = new Set(data.map(r => r[col])).size;
+    if (unique < bestUnique && unique > 1) {
+      bestUnique = unique;
+      best = col;
+    }
+  });
+  return best;
+}
+
+// ── CREATE CHART CARD DOM ELEMENT ─────────────────────────────
+function createChartCard(cfg, idx) {
+  const card = document.createElement('div');
+  card.className = 'chart-card';
+  card.style.animationDelay = (idx * 0.07) + 's';
+  card.innerHTML = `
+    <div class="chart-card-header">
+      <div>
+        <span class="chart-type-badge ${cfg.badgeClass}">${chartIcon(cfg.type)} ${cfg.label}</span>
+        <div class="chart-title">${escHTML(cfg.title)}</div>
+        <div class="chart-subtitle">${escHTML(cfg.subtitle)}</div>
+      </div>
+    </div>
+    <div class="chart-canvas-wrap">
+      <canvas></canvas>
+    </div>`;
+  return card;
+}
+
+function chartIcon(type) {
+  const icons = { bar:'▊', line:'〰', doughnut:'◉', scatter:'⁘', radar:'⬡', polarArea:'◑' };
+  return icons[type] || '📊';
+}
+
+// ── RENDER CHART (the core logic) ─────────────────────────────
+/**
+ * renderChart — dispatches to the correct chart-building function.
+ * All functions return a Chart.js instance.
+ */
+function renderChart(canvas, cfg, data) {
+  try {
+    switch (cfg.type) {
+      case 'bar':      return renderBar(canvas, cfg, data);
+      case 'line':     return renderLine(canvas, cfg, data);
+      case 'doughnut': return renderDoughnut(canvas, cfg, data);
+      case 'scatter':  return renderScatter(canvas, cfg, data);
+      case 'radar':    return renderRadar(canvas, cfg, data);
+      case 'polarArea':return renderPolar(canvas, cfg, data);
+      default: return null;
+    }
+  } catch(e) {
+    console.warn('Chart render failed:', cfg.type, e);
+    return null;
+  }
+}
+
+// ── BAR CHART ─────────────────────────────────────────────────
+function renderBar(canvas, cfg, data) {
+  // Group data by category column, average the numeric column
+  const grouped = groupByAverage(data, cfg.catCol, cfg.numCol, 10);
+  const labels  = grouped.map(g => g.label);
+  const values  = grouped.map(g => g.value);
+
+  return new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: cfg.numCol,
+        data: values,
+        backgroundColor: PALETTE.map(c => c + 'cc'),
+        borderColor: PALETTE,
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${numFmt(ctx.raw)}` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { grid: { color: 'rgba(0,0,0,.06)' }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ── LINE CHART ────────────────────────────────────────────────
+function renderLine(canvas, cfg, data) {
+  // Group by time column, average each numeric column per time period
+  const times  = [...new Set(data.map(r => r[cfg.timeCol]))].filter(v => v != null).sort();
+  const datasets = cfg.numCols.map((col, i) => {
+    const values = times.map(t => {
+      const rows = data.filter(r => r[cfg.timeCol] == t && r[col] != null && !isNaN(r[col]));
+      return rows.length ? avg(rows.map(r => r[col])) : null;
+    });
+    return {
+      label: col,
+      data: values,
+      borderColor: PALETTE[i],
+      backgroundColor: PALETTE[i] + '22',
+      borderWidth: 2.5,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      tension: 0.35,
+      fill: i === 0,
+    };
+  });
+
+  return new Chart(canvas, {
+    type: 'line',
+    data: { labels: times.map(String), datasets },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: 'rgba(0,0,0,.06)' } }
+      }
+    }
+  });
+}
+
+// ── DOUGHNUT CHART ────────────────────────────────────────────
+function renderDoughnut(canvas, cfg, data) {
+  let labels, values;
+
+  if (cfg.catCol) {
+    // Group by category, sum/avg the numeric column → top 10
+    const grouped = groupByAverage(data, cfg.catCol, cfg.numCol, 10);
+    labels = grouped.map(g => g.label);
+    values = grouped.map(g => Math.abs(g.value)); // abs for display
+  } else {
+    // Bucket the numeric column into ranges
+    const nums = data.map(r => r[cfg.numCol]).filter(v => v != null && !isNaN(v));
+    const { bl, bv } = bucketize(nums, 8);
+    labels = bl; values = bv;
+  }
+
+  return new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: PALETTE.map(c => c + 'dd'),
+        borderColor: '#fff',
+        borderWidth: 3,
+        hoverOffset: 10,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 14, font: { size: 11 }, padding: 12 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${numFmt(ctx.raw)}` } }
+      },
+      cutout: '62%',
+    }
+  });
+}
+
+// ── SCATTER PLOT ──────────────────────────────────────────────
+function renderScatter(canvas, cfg, data) {
+  // Limit to 200 points for performance
+  const sample = data.slice(0, 200).filter(r =>
+    r[cfg.xCol] != null && !isNaN(r[cfg.xCol]) &&
+    r[cfg.yCol] != null && !isNaN(r[cfg.yCol])
+  );
+
+  // Color by category if available
+  let datasets;
+  if (cfg.catCol) {
+    const categories = [...new Set(data.map(r => r[cfg.catCol]))].slice(0, 10);
+    datasets = categories.map((cat, i) => ({
+      label: cat,
+      data: sample
+        .filter(r => r[cfg.catCol] === cat)
+        .map(r => ({ x: r[cfg.xCol], y: r[cfg.yCol] })),
+      backgroundColor: PALETTE[i % PALETTE.length] + 'bb',
+      pointRadius: 5,
+    }));
+  } else {
+    datasets = [{
+      label: 'Data Points',
+      data: sample.map(r => ({ x: r[cfg.xCol], y: r[cfg.yCol] })),
+      backgroundColor: PALETTE[0] + '99',
+      pointRadius: 5,
+    }];
+  }
+
+  return new Chart(canvas, {
+    type: 'scatter',
+    data: { datasets },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: cfg.catCol != null, position: 'top', labels: { boxWidth: 12, font: { size: 10 }, padding: 10 } },
+        tooltip: { callbacks: { label: ctx => `(${numFmt(ctx.raw.x)}, ${numFmt(ctx.raw.y)})` } }
+      },
+      scales: {
+        x: { title: { display: true, text: cfg.xCol, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,.06)' } },
+        y: { title: { display: true, text: cfg.yCol, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,.06)' } }
+      }
+    }
+  });
+}
+
+// ── RADAR CHART ───────────────────────────────────────────────
+function renderRadar(canvas, cfg, data) {
+  // Top 5 categories for comparison
+  const categories = [...new Set(data.map(r => r[cfg.catCol]))].slice(0, 5).filter(Boolean);
+
+  // Normalize each metric to 0–100 scale for fair radar display
+  const normalizedCols = cfg.numCols.map(col => {
+    const vals = data.map(r => r[col]).filter(v => v != null && !isNaN(v));
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    return { col, mn, mx };
+  });
+
+  const datasets = categories.map((cat, i) => {
+    const rows = data.filter(r => r[cfg.catCol] === cat);
+    const values = normalizedCols.map(({ col, mn, mx }) => {
+      const rowVals = rows.map(r => r[col]).filter(v => v != null && !isNaN(v));
+      const mean = rowVals.length ? avg(rowVals) : 0;
+      return mx !== mn ? ((mean - mn) / (mx - mn)) * 100 : 50;
+    });
+    return {
+      label: cat,
+      data: values,
+      borderColor: PALETTE[i],
+      backgroundColor: PALETTE[i] + '22',
+      borderWidth: 2,
+      pointRadius: 4,
+    };
+  });
+
+  return new Chart(canvas, {
+    type: 'radar',
+    data: { labels: cfg.numCols, datasets },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { font: { size: 9 }, stepSize: 25, backdropColor: 'transparent' },
+          pointLabels: { font: { size: 10 } },
+          grid: { color: 'rgba(0,0,0,.08)' }
+        }
+      }
+    }
+  });
+}
+
+// ── POLAR AREA CHART ──────────────────────────────────────────
+function renderPolar(canvas, cfg, data) {
+  let labels, values;
+
+  if (cfg.catCol) {
+    const grouped = groupByAverage(data, cfg.catCol, cfg.numCol, 8);
+    labels = grouped.map(g => g.label);
+    values = grouped.map(g => Math.abs(g.value));
+  } else {
+    const nums = data.map(r => r[cfg.numCol]).filter(v => v != null && !isNaN(v));
+    const { bl, bv } = bucketize(nums, 8);
+    labels = bl; values = bv;
+  }
+
+  return new Chart(canvas, {
+    type: 'polarArea',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: PALETTE.map(c => c + 'cc'),
+        borderColor: '#fff',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 14, font: { size: 11 }, padding: 10 } },
+      },
+      scales: {
+        r: {
+          ticks: { font: { size: 9 }, backdropColor: 'transparent' },
+          grid: { color: 'rgba(0,0,0,.08)' }
+        }
+      }
+    }
+  });
+}
+
+// ── STATS ROW ─────────────────────────────────────────────────
+function renderStats(data, numericCols, categoricalCols, timeCols) {
+  const row = document.getElementById('statsRow');
+  const cards = [
+    { icon: '📋', val: data.length.toLocaleString(), lbl: 'Total Rows', cls: 'p' },
+    { icon: '📊', val: Object.keys(columnTypes).length, lbl: 'Columns', cls: 't' },
+    { icon: '🔢', val: numericCols.length, lbl: 'Numeric', cls: 'o' },
+    { icon: '🏷️', val: categoricalCols.length, lbl: 'Categorical', cls: 'g' },
+  ];
+
+  if (timeCols.length > 0) {
+    const times = [...new Set(data.map(r => r[timeCols[0]]))].filter(Boolean).sort();
+    cards.push({ icon: '📅', val: times.length, lbl: `${timeCols[0]} values`, cls: 'p' });
+  }
+
+  row.innerHTML = cards.map(c => `
+    <div class="stat-card ${c.cls}">
+      <div class="stat-ico">${c.icon}</div>
+      <div class="stat-val">${c.val}</div>
+      <div class="stat-lbl">${c.lbl}</div>
+    </div>`).join('');
+}
+
+// ── FILE INFO RENDER ──────────────────────────────────────────
+function renderFileInfo(name, rows, cols, colTypes) {
+  document.getElementById('fileName').textContent = name;
+  document.getElementById('fileMeta').textContent =
+    `${rows.toLocaleString()} rows · ${cols.length} columns`;
+
+  const tagContainer = document.getElementById('colTags');
+  tagContainer.innerHTML = cols.map(col => {
+    const type = colTypes[col] || 'categorical';
+    return `<span class="col-tag ${type}">${escHTML(col)}</span>`;
+  }).join('');
+
+  document.getElementById('fileInfo').classList.add('show');
+}
+
+// ── EXPORT PDF ────────────────────────────────────────────────
+async function exportPDF() {
+  showToast('⏳', 'Generating PDF — this may take a moment…');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageW = 210, margin = 14;
+
+  // Header
+  doc.setFillColor(44, 27, 105);
+  doc.rect(0, 0, 210, 24, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(15); doc.setFont('helvetica', 'bold');
+  doc.text('GIIP — Data Explorer Report', margin, 11);
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+  doc.text(`Generated: ${new Date().toLocaleString()}`, margin, 18);
+  doc.text(`File: ${document.getElementById('fileName').textContent}`, 140, 18);
+
+  // Meta
+  doc.setTextColor(30, 30, 63);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  doc.text(document.getElementById('fileMeta').textContent, margin, 30);
+
+  let yPos = 38;
+
+  // Capture each chart card as image
+  const cards = document.querySelectorAll('.chart-card');
+
+for (let i = 0; i < cards.length; i++) {
+  try {
+    const canvas = cards[i].querySelector("canvas");
+
+    if (!canvas) continue;
+
+    const imgData = canvas.toDataURL("image/png", 1.0);
+
+    const imgW = pageW - margin * 2;
+    const imgH = (canvas.height / canvas.width) * imgW;
+
+    if (yPos + imgH > 275) {
+      doc.addPage();
+      yPos = 15;
+    }
+
+    // Add chart title
+    const title = cards[i].querySelector(".chart-title")?.innerText || `Chart ${i+1}`;
+    doc.setFontSize(11);
+    doc.text(title, margin, yPos - 3);
+
+    doc.addImage(imgData, 'PNG', margin, yPos, imgW, imgH);
+
+    yPos += imgH + 10;
+
+  } catch(e) {
+    console.warn("Chart export failed:", e);
+  }
+}
+
+  // Footer
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7); doc.setTextColor(150);
+    doc.text(`GIIP Data Explorer  |  Page ${i} of ${pageCount}`, margin, 290);
+  }
+
+  doc.save(`GIIP_DataExplorer_${Date.now()}.pdf`);
+  showToast('📄', 'PDF exported successfully!');
+}
+
+// ── CLEAR DATA ────────────────────────────────────────────────
+function clearData() {
+  parsedData  = [];
+  columnTypes = {};
+  activeCharts.forEach(c => c.destroy());
+  activeCharts = [];
+
+  document.getElementById('fileInfo').classList.remove('show');
+  document.getElementById('chartsSection').classList.remove('show');
+  document.getElementById('chartsGrid').innerHTML = '';
+  document.getElementById('statsRow').innerHTML  = '';
+  document.getElementById('emptyState').style.display = '';
+  document.getElementById('csvInput').value = '';
+  showToast('🗑️', 'Data cleared');
+}
+
+// ── UTILITY FUNCTIONS ─────────────────────────────────────────
+
+/** Group rows by a categorical column, average a numeric column, return top N */
+function groupByAverage(data, catCol, numCol, topN = 10) {
+  const map = {};
+  data.forEach(row => {
+    const key = String(row[catCol] ?? 'Unknown').trim();
+    const val = row[numCol];
+    if (val == null || isNaN(val)) return;
+    if (!map[key]) map[key] = { sum: 0, count: 0 };
+    map[key].sum   += +val;
+    map[key].count += 1;
+  });
+
+  return Object.entries(map)
+    .map(([label, { sum, count }]) => ({ label, value: sum / count }))
+    .filter(g => !isNaN(g.value))
+    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+    .slice(0, topN);
+}
+
+/** Bucket a numeric array into N equal-width ranges */
+function bucketize(nums, n) {
+  const mn = Math.min(...nums), mx = Math.max(...nums);
+  const step = (mx - mn) / n;
+  const bl = [], bv = new Array(n).fill(0);
+
+  for (let i = 0; i < n; i++) {
+    const lo = mn + i * step, hi = lo + step;
+    bl.push(`${numFmt(lo)}–${numFmt(hi)}`);
+  }
+  nums.forEach(v => {
+    const idx = Math.min(Math.floor((v - mn) / step), n - 1);
+    bv[idx]++;
+  });
+  return { bl, bv };
+}
+
+/** Average an array of numbers */
+function avg(arr) {
+  return arr.reduce((s, v) => s + v, 0) / arr.length;
+}
+
+/** Format a number nicely */
+function numFmt(n) {
+  if (n == null || isNaN(n)) return '—';
+  if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return +n.toFixed(2) + '';
+}
+
+/** Escape HTML special characters */
+function escHTML(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/** Show / hide the loading spinner */
+function showLoading(show) {
+  document.getElementById('loadingState').classList.toggle('show', show);
+  document.getElementById('dropZone').style.display = show ? 'none' : '';
+}
+
+/** Toast notification */
+let _toastTimer;
+function showToast(ico, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('tico').textContent = ico;
+  document.getElementById('tmsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 3400);
+}
+
+// ── SCROLL PROGRESS ───────────────────────────────────────────
+window.addEventListener('scroll', () => {
+  const el = document.getElementById('scrollBar');
+  const st = document.documentElement.scrollTop;
+  const sh = document.documentElement.scrollHeight - window.innerHeight;
+  el.style.width = sh > 0 ? (st / sh * 100) + '%' : '0%';
+});
+
+// ── AUTH STUB ─────────────────────────────────────────────────
+const BASE_URL = "http://localhost:5000";
+
+window.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  const userName = localStorage.getItem('userName') || 'U';
+  const parts = userName.trim().split(' ').filter(Boolean);
+  const initials = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : (parts[0]?.[0] || 'U').toUpperCase();
+  const avatar = document.getElementById('userAvatar');
+  if (avatar) {
+    avatar.textContent = initials;
+  }
+});
+
+function handleLogout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('isLoggedIn');
+  localStorage.removeItem('userName');
+  localStorage.removeItem('userEmail');
+  window.location.href = 'index.html';
+}
+</script>
+</body>
+</html>
