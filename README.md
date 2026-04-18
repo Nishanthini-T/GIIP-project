@@ -32,5 +32,8 @@ npm start
 ### Frontend
 Open the HTML files directly in your browser
 
+## Main link for demo
+https://nishanthini-t.github.io/GIIP-project/
+
 ## Author
 Nishanthini T
