@@ -335,7 +335,7 @@
     </div>
 
     <script>
-        const BASE_URL = "http://localhost:5000";
+        const BASE_URL = "";
 
         function showRegister() {
             document.getElementById('loginForm').classList.add('hidden');
@@ -454,7 +454,7 @@
                 clearTidioSession();
                 persistAuth(data);
                 showAlert('register', 'Account created successfully! Redirecting...', 'success');
-                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+                setTimeout(() => { window.location.href = 'frontend/dashboard.html'; }, 1000);
             } catch (error) {
                 showAlert('register', error.message || 'Registration failed', 'error');
                 alert(error.message || 'Registration failed');
@@ -464,7 +464,7 @@
         window.onload = function() {
             const token = localStorage.getItem('token');
             if (token) {
-                window.location.href = 'dashboard.html';
+                window.location.href = 'frontend/dashboard.html';
             }
         };
     </script>
