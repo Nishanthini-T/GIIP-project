@@ -9,6 +9,7 @@ This project is a web application that provides data visualization and analysis 
 - Interactive pages
 - User feedback system
 - Reports section
+- Profile section
 
 ## Tech Stack
 - Frontend: HTML, CSS, JavaScript
