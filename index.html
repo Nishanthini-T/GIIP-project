@@ -416,7 +416,7 @@
                 clearTidioSession();
                 persistAuth(data);
                 showAlert('login', 'Login successful! Redirecting...', 'success');
-                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+                setTimeout(() => { window.location.href = 'frontend/dashboard.html'; }, 1000);
             } catch (error) {
                 showAlert('login', error.message || 'Login failed', 'error');
                 alert(error.message || 'Login failed');
