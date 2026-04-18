@@ -1156,7 +1156,7 @@ const BASE_URL = "http://localhost:5000";
 window.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('token');
   if (!token) {
-    window.location.href = 'index.html';
+    window.location.href = '../index.html';
     return;
   }
 
@@ -1176,7 +1176,7 @@ function handleLogout() {
   localStorage.removeItem('isLoggedIn');
   localStorage.removeItem('userName');
   localStorage.removeItem('userEmail');
-  window.location.href = 'index.html';
+  window.location.href = '../index.html';
 }
 </script>
 </body>
